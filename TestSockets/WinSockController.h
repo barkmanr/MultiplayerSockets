@@ -1,17 +1,29 @@
 #pragma once
 #include <WinSock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+
 #include <string>
 #include <iostream>
 using namespace std;
 
 #pragma comment(lib, "Ws2_32.lib")
+#define DEFAULT_BUF_LEN 512
 
 class WinSockController
 {
 public:
 	WinSockController();
 	virtual ~WinSockController();
+	void Cleanup();
+
 private:
+	bool ResolveIPAndPort(const char* _serverIP, const char* _serverPort);
+	ADDRINFOA* m_addrInfo;
+	SOCKET m_serverSocket;
+	SOCKET m_clientSocket;
+	char recvBuf[DEFAULT_BUF_LEN] = {}; //test for now;
+
 	WSADATA m_data;
 	BYTE m_lv; //Low-byte major
 	BYTE m_hv; //High-byte minor
@@ -25,6 +37,10 @@ public:
 	bool PrintErrorInfo(int _retVal);
 	bool PrintMismatchInfo();
 	void PrintSuccessInfo();
-	void Cleanup();
+
+	bool CreateServer(string _serverPort);
+	bool CreateClient(string _serverIP, string _serverPort);
+	bool SendData(const char* _data, int size);
+	bool RecvData();
 };
 
