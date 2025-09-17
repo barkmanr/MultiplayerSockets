@@ -14,7 +14,7 @@ void GameLoop2();
 
 int main(int argc, char* argv[])
 {
-	//c
+	//created git
 	if (!(argc >= 2)) { "argc not big enough"; return 0; }
 	int returnValue = Initialize(argv);
 	if (returnValue >= 0)
