@@ -46,7 +46,7 @@ bool WinSockController::ResolveIPAndPort(const char* _serverIP, const char* _ser
 	{
 		TempAdd.ai_flags = AI_PASSIVE;
 	}
-	if (getaddrinfo(_serverIP, _serverPort, &TempAdd, &m_addrInfo) != 0) //put binary address in member address
+	if (getaddrinfo(_serverIP, _serverPort, &TempAdd, &m_addrInfo) != 0) //put binary address in member address (auto does it for server)
 	{
 		printf("Port & IP could not be resolved\n");
 		return false;
@@ -55,12 +55,13 @@ bool WinSockController::ResolveIPAndPort(const char* _serverIP, const char* _ser
 	return true;
 }
 
-bool WinSockController::CreateServer(string _serverPort)
+bool WinSockController::CreateServer(string _serverPort) 
 {
-	if (!ResolveIPAndPort(nullptr, _serverPort.c_str()))
+	if (!ResolveIPAndPort(nullptr, _serverPort.c_str())) /*nullptr for server*/
 	{
 		return false;
-	}
+	} 
+
 	m_serverSocket = socket(m_addrInfo->ai_family, m_addrInfo->ai_socktype, m_addrInfo->ai_protocol);
 
 	if (m_serverSocket == INVALID_SOCKET)
@@ -78,7 +79,9 @@ bool WinSockController::CreateServer(string _serverPort)
 		printf("Unable to listen on server socket\n");
 		return false;
 	}
+
 	m_clientSocket = accept(m_serverSocket, nullptr, nullptr); //wait for client
+
 	if (m_clientSocket == INVALID_SOCKET)
 	{
 		printf("Unable to accept client socket\n");
@@ -88,8 +91,8 @@ bool WinSockController::CreateServer(string _serverPort)
 	if (ioctlsocket(m_clientSocket, FIONBIO, &block) == SOCKET_ERROR)
 	{
 		printf("Setting non blocking failed\n");
-		return true;
 	}
+	return true;
 }
 
 bool WinSockController::CreateClient(string _serverIP, string _serverPort)
@@ -98,12 +101,15 @@ bool WinSockController::CreateClient(string _serverIP, string _serverPort)
 	{
 		return false;
 	}
+
 	m_clientSocket = socket(m_addrInfo->ai_family, m_addrInfo->ai_socktype, m_addrInfo->ai_protocol);
 	if (m_clientSocket == INVALID_SOCKET)
 	{
 		printf("Unable to create client socket\n");
 		return false;
 	}
+
+	//connect to server (needs server)
 	if (connect(m_clientSocket, m_addrInfo->ai_addr, (int)m_addrInfo->ai_addrlen) == SOCKET_ERROR)
 	{
 		printf("Unable to connect to server\n");

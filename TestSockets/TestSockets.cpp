@@ -10,6 +10,7 @@ static WinSockController winsock = WinSockController();
 
 int Initialize(char* argv[]);
 void GameLoop();
+void SendMsg(string msg);
 
 int main(int argc, char* argv[])
 {
@@ -25,24 +26,16 @@ int main(int argc, char* argv[])
 
 int Initialize(char* argv[])
 {
-	if (strcmp(argv[1], "server") == 0)
+	if (strcmp(argv[1], "server") == 0) //server 
 	{
-		if ((!winsock.Initialize(2, 2)) ||(!winsock.CreateServer("42069")))
+		if ((!winsock.Initialize(2, 2)) || (!winsock.CreateServer("42069")))
 		{
 			return -1;
 		}
 	}
-	else if (strcmp(argv[1], "client") == 0)
+	if (strcmp(argv[1], "client") == 0) //client 
 	{
-		if ((!winsock.Initialize(2, 2)) || (!winsock.CreateClient("127.0.0.1","42069")))
-		{
-			return -1;
-		}
-		winsock.SendData("Hi Ryan B!\n", 11);
-	}
-	else if (strcmp(argv[1], "test") == 0)
-	{
-		if (!winsock.Initialize(1, 0))
+		if ((!winsock.Initialize(2, 2)) || (!winsock.CreateClient("127.0.0.1" /*local address*/,"42069")))
 		{
 			return -1;
 		}
@@ -52,12 +45,49 @@ int Initialize(char* argv[])
 
 void GameLoop()
 {
+	string msg = "";
+	bool Go = false;
+	char key = ' ';
 	while (true)
 	{
-		if (GetAsyncKeyState(27) & 0x8000) //Esc
+		if (_kbhit())
+		{
+			key = _getch();
+			if (key >= 32 && key <= 126) //character key
+			{
+				Go = true;
+			}
+		}
+		if (Go) //character
+		{
+			Go = false;
+			msg += key;
+
+		}
+		if (key == 13) //enter
+		{
+			key = ' ';
+			SendMsg(msg);
+			msg = "";
+		}
+
+		if (key == 8) //backspace
+		{
+			key = ' ';
+			if (!msg.empty()) {
+				msg.erase(msg.length() - 1);
+			}
+		}
+		if (key == 27) //escape
 		{
 			break;
 		}
 		winsock.RecvData();
 	}
+		
+}
+
+void SendMsg(string msg)
+{
+	winsock.SendData(msg.c_str(), msg.length());
 }
