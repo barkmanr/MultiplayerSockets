@@ -4,6 +4,7 @@
 #include <iphlpapi.h>
 
 #include <string>
+#include <vector>
 #include <iostream>
 using namespace std;
 
@@ -22,6 +23,7 @@ private:
 	ADDRINFOA* m_addrInfo;
 	SOCKET m_serverSocket;
 	SOCKET m_clientSocket;
+	vector<SOCKET> m_clientSocket2;
 	char recvBuf[DEFAULT_BUF_LEN] = {}; //test for now;
 
 	WSADATA m_data;
@@ -37,6 +39,8 @@ public:
 	bool PrintErrorInfo(int _retVal);
 	bool PrintMismatchInfo();
 	void PrintSuccessInfo();
+
+	bool AcceptClient();
 
 	bool CreateServer(string _serverPort);
 	bool CreateClient(string _serverIP, string _serverPort);

@@ -79,19 +79,6 @@ bool WinSockController::CreateServer(string _serverPort)
 		printf("Unable to listen on server socket\n");
 		return false;
 	}
-
-	m_clientSocket = accept(m_serverSocket, nullptr, nullptr); //wait for client
-
-	if (m_clientSocket == INVALID_SOCKET)
-	{
-		printf("Unable to accept client socket\n");
-		return false;
-	}
-	u_long block = 1; //0 = blocking
-	if (ioctlsocket(m_clientSocket, FIONBIO, &block) == SOCKET_ERROR)
-	{
-		printf("Setting non blocking failed\n");
-	}
 	return true;
 }
 
@@ -141,11 +128,31 @@ bool WinSockController::SendData(const char* _data, int _size)
 
 bool WinSockController::RecvData()
 {
-	int recvResult = recv(m_clientSocket, recvBuf, DEFAULT_BUF_LEN, 0);
+	if (m_clientSocket2.size() < 1) { return true; }
+	int recvResult = recv(m_clientSocket2.front(), recvBuf, DEFAULT_BUF_LEN, 0);
 	if (recvResult > 0)
 	{
 		printf("Received data: %s\n", recvBuf);
 		memset(recvBuf, 0, DEFAULT_BUF_LEN);
+	}
+	return true;
+}
+
+bool WinSockController::AcceptClient()
+{
+	if (m_clientSocket2.size() >= 1) { return true; }
+	m_clientSocket2.push_back(accept(m_serverSocket, nullptr, nullptr)); //wait for client
+
+	if (m_clientSocket2.back() == INVALID_SOCKET)
+	{
+		printf("Unable to accept client socket\n");
+		m_clientSocket2.pop_back();
+		return false;
+	}
+	u_long block = 1; //0 = blocking
+	if (ioctlsocket(m_clientSocket2.back(), FIONBIO, &block) == SOCKET_ERROR)
+	{
+		printf("Setting non blocking failed\n");
 	}
 	return true;
 }
@@ -209,6 +216,11 @@ void WinSockController::PrintSuccessInfo()
 void WinSockController::Cleanup()
 {
 	WSACleanup();
+	for(SOCKET s : m_clientSocket2)
+	{
+		closesocket(s);
+	}
+	m_clientSocket2.clear();
 	if (m_serverSocket != INVALID_SOCKET)
 	{
 		closesocket(m_serverSocket);
