@@ -18,12 +18,12 @@ public:
 	virtual ~WinSockController();
 	void Cleanup();
 
-private:
+protected: //bad practice 
 	bool ResolveIPAndPort(const char* _serverIP, const char* _serverPort);
 	ADDRINFOA* m_addrInfo;
 	SOCKET m_serverSocket;
-	SOCKET m_clientSocket;
-	vector<SOCKET> m_clientSocket2;
+	//SOCKET m_clientSocket;
+	vector<SOCKET> m_clientSockets;
 	char recvBuf[DEFAULT_BUF_LEN] = {}; //test for now;
 
 	WSADATA m_data;
@@ -40,11 +40,11 @@ public:
 	bool PrintMismatchInfo();
 	void PrintSuccessInfo();
 
-	bool AcceptClient();
-
-	bool CreateServer(string _serverPort);
-	bool CreateClient(string _serverIP, string _serverPort);
-	bool SendData(const char* _data, int size);
-	bool RecvData();
+	virtual bool AcceptClient() =0;
+	virtual bool Create(string _serverIP, string _serverPort) = 0;
+	//bool CreateServer(string _serverPort);
+	//bool CreateClient(string _serverIP, string _serverPort);
+	virtual bool SendData(const char* _data, int size) = 0;
+	virtual bool RecvData() = 0;
 };
 

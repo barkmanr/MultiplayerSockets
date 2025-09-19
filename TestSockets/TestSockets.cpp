@@ -5,6 +5,8 @@
 #include<Windows.h>
 #include <conio.h>
 #include "WinSockController.h"
+#include "Server.h"
+#include "Client.h"
 
 struct KeyState
 {
@@ -14,7 +16,7 @@ struct KeyState
 	bool status = true;
 };
 
-static WinSockController winsock = WinSockController();
+WinSockController* winsock = nullptr;
 const char* type;
 
 int Initialize(char* argv[]);
@@ -22,7 +24,6 @@ void GameLoop();
 void SendMsg(string msg);
 KeyState HitKey(KeyState KS);
 KeyState HandleKey(KeyState KS);
-void HandleServer();
 
 
 int main(int argc, char* argv[])
@@ -42,14 +43,16 @@ int Initialize(char* argv[])
 	type = argv[1];
 	if (strcmp(argv[1], "server") == 0) //server 
 	{
-		if ((!winsock.Initialize(2, 2)) || (!winsock.CreateServer("42069")))
+		winsock = new Server();
+		if ((!winsock->Initialize(2, 2)) || (!winsock->Create("","42069")))
 		{
 			return -1;
 		}
 	}
 	if (strcmp(argv[1], "client") == 0) //client 
 	{
-		if ((!winsock.Initialize(2, 2)) || (!winsock.CreateClient("127.0.0.1" /*local address*/,"42069")))
+		winsock = new Client();
+		if ((!winsock->Initialize(2, 2)) || (!winsock->Create("127.0.0.1" /*local address*/,"42069")))
 		{
 			return -1;
 		}
@@ -59,23 +62,26 @@ int Initialize(char* argv[])
 
 void GameLoop()
 {
+	if (winsock == nullptr) { return; }
 	KeyState KS = KeyState{};
 	while (true)
 	{
-		HandleServer();
 		KS = HandleKey(KS);
 		if (!KS.status)
 		{
 			break;
 		}
-		winsock.RecvData();
+		winsock->RecvData();
 	}
-		
+	if (winsock != nullptr)
+	{
+		delete winsock;
+	}
 }
 
 void SendMsg(string msg)
 {
-	winsock.SendData(msg.c_str(), msg.length());
+	winsock->SendData(msg.c_str(), msg.length());
 }
 
 KeyState HitKey(KeyState KS)
@@ -93,6 +99,12 @@ KeyState HitKey(KeyState KS)
 KeyState HandleKey(KeyState KS)
 {
 	KS = HitKey(KS);
+	if (KS.key == 97)
+	{
+		printf("test\n");
+		KS.key = ' ';
+		winsock->AcceptClient();
+	}
 	if (KS.go) //character
 	{
 		KS.go = false;
@@ -105,7 +117,6 @@ KeyState HandleKey(KeyState KS)
 		SendMsg(KS.msg);
 		KS.msg = "";
 	}
-
 	if (KS.key == 8) //backspace
 	{
 		KS.key = ' ';
@@ -118,13 +129,4 @@ KeyState HandleKey(KeyState KS)
 		KS.status = false;
 	}
 	return KS;
-}
-
-void HandleServer()
-{
-	if (strcmp(type, "server") != 0)
-	{
-		return;
-	}
-	winsock.AcceptClient();
 }
