@@ -24,6 +24,12 @@ bool Server::Create(string nullip, string _serverPort)
 		printf("Unable to listen on server socket\n");
 		return false;
 	}
+	u_long nonBlocking = 1;
+	if (ioctlsocket(m_serverSocket, FIONBIO, &nonBlocking) == SOCKET_ERROR)
+	{
+		printf("Failed to set server socket to non-blocking\n");
+		return false;
+	}
 	return true;
 }
 
@@ -63,16 +69,17 @@ bool Server::RecvData()
 
 bool Server::AcceptClient()
 {
-	m_clientSockets.push_back(accept(m_serverSocket, nullptr, nullptr)); //wait for client ( need to change )
-
-	if (m_clientSockets.back() == INVALID_SOCKET)
+	SOCKET S = INVALID_SOCKET;
+	S = accept(m_serverSocket, nullptr, nullptr);
+	if (S == INVALID_SOCKET)
 	{
-		printf("Unable to accept client socket\n");
-		m_clientSockets.pop_back();
+		//printf("Unable to accept client socket\n");
 		return false;
 	}
+
+	m_clientSockets.push_back(S);
 	u_long block = 1; //0 = blocking
-	if (ioctlsocket(m_clientSockets.back(), FIONBIO, &block) == SOCKET_ERROR)
+	if (ioctlsocket(m_clientSockets.back(), FIONBIO, &block) == SOCKET_ERROR) //does this need to be here?
 	{
 		printf("Setting non blocking failed\n");
 	}

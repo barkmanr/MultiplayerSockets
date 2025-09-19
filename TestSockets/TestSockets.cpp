@@ -67,6 +67,7 @@ void GameLoop()
 	while (true)
 	{
 		KS = HandleKey(KS);
+		winsock->AcceptClient();
 		if (!KS.status)
 		{
 			break;
@@ -99,12 +100,6 @@ KeyState HitKey(KeyState KS)
 KeyState HandleKey(KeyState KS)
 {
 	KS = HitKey(KS);
-	if (KS.key == 97)
-	{
-		printf("test\n");
-		KS.key = ' ';
-		winsock->AcceptClient();
-	}
 	if (KS.go) //character
 	{
 		KS.go = false;
